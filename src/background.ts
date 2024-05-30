@@ -12,7 +12,9 @@ chrome.tabs.onActivated.addListener(function (activeInfo) {
     if (!tab.url) return;
 
     if (!(await isSiteVisited(tab.url))) addSiteToHistory(tab.url);
+
     console.log('Site already visited');
+    await sendMessageToContentScript();
   });
 });
 
@@ -21,7 +23,9 @@ chrome.tabs.onUpdated.addListener(async (tabId, change, tab) => {
     if (!tab.url) return;
 
     if (!(await isSiteVisited(tab.url))) addSiteToHistory(tab.url);
+
     console.log('Site already visited');
+    await sendMessageToContentScript();
   }
 });
 
@@ -39,4 +43,13 @@ const isSiteVisited = async (currentSite: string) => {
   const history = await getHistoryList();
   if (history && !history.includes(currentSite)) return false;
   return true;
+};
+
+const sendMessageToContentScript = () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    if (tabs[0].id)
+      chrome.tabs.sendMessage(tabs[0].id, {
+        event: 'VISITED',
+      });
+  });
 };
